@@ -38,7 +38,7 @@ async def give_income():
                 income = 0
                 # логика дохода
                 pass
-
+                
                 # доход от ролей
                 for role in member.roles:
                     if role.id in role_income:

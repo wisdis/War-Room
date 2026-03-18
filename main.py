@@ -52,8 +52,6 @@ async def give_income():
 
             add_money(member.id, income)
 
-        await asyncio.sleep(60)  # каждая минута
-
 @bot.command()
 async def additem(ctx):
     await ctx.send("Название предмета?")

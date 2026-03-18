@@ -20,4 +20,13 @@ async def on_ready():
 async def hello(ctx):
     await ctx.send("Привет!")
 
+@bot.command()
+async def help(ctx):
+    help_text = """
+**.hello** - бот приветствуется
+**.help** - выводит список команд
+"""
+    # Отправляем как "кодовый блок" для форматирования
+    await ctx.send(f"```{help_text}```")
+
 bot.run(TOKEN)

@@ -45,7 +45,7 @@ async def give_income():
                 # доход от предметов
                 user_items = get_user_items(member.id)
                 for item in user_items:
-                    income += item["user_item_db"]
+                    income += item["user_items_db"]
 
                 add_money(member.id, income)
 

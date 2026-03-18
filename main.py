@@ -21,6 +21,17 @@ async def on_ready():
     print(f'Бот {bot.user} готов к работе')
     bot.loop.create_task(give_income())
 
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(f"Ошибка: пропущен аргумент.\nПример использования: .{ctx.command} <аргументы>")
+    elif isinstance(error, commands.BadArgument):
+        await ctx.send(f"Ошибка: неверный тип аргумента.\nПример использования: .{ctx.command} <аргументы>")
+    elif isinstance(error, commands.CommandNotFound):
+        await ctx.send("Команда не найдена. Используй .help чтобы увидеть все команды")
+    else:
+        await ctx.send(f"Произошла ошибка: {str(error)}")
+
 @bot.command()
 async def привет(ctx):
     ответы = [

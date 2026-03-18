@@ -19,12 +19,14 @@ async def on_ready():
 
 @bot.command()
 async def hello(ctx):
-    fraza = ["Привет!"
+    fraza = [
+        "Привет!"
         "Приветствую!"
         "Добрый день 👋"
         "Здравствуйте!"
         "Салют!"
-        "Хай!"]
+        "Хай!"
+    ]
     await ctx.send(choice.random(privet))
     
 bot.run(TOKEN)

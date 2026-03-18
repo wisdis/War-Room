@@ -2,20 +2,22 @@ import discord
 from discord.ext import commands
 import os
 
+# Берём токен из Environment Variable на Railway
 TOKEN = os.getenv("TOKEN")
 
-# Intents — нужны для работы команд и событий
+# Создаём intents
 intents = discord.Intents.default()
-intents.message_content = True  # разрешаем читать сообщения для команд
+intents.message_content = True  # важно для работы команд
 
-client = commands.Bot(command_prefix=".", intents=intents)
+# Создаём бота с префиксом "." и intents
+bot = commands.Bot(command_prefix=".", intents=intents)
 
-@client.event
+@bot.event
 async def on_ready():
-    print(f'Logged in as {client.user}')
+    print(f'Logged in as {bot.user}')
 
-@client.command()
+@bot.command()
 async def hello(ctx):
     await ctx.send("Привет!")
 
-client.run(TOKEN)
+bot.run(TOKEN)

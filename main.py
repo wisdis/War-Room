@@ -4,6 +4,8 @@ import os
 import random
 import asyncio
 from database import add_money, get_user_items, shop, get_balance, apply_item_effects
+from discord.ui import View, Button
+from discord import Embed
 
 # токен
 TOKEN = os.getenv("TOKEN")
@@ -176,4 +178,63 @@ async def setup_role(ctx, action: str, role: discord.Role, income: int = 0, popu
         else:
             await ctx.send("Роль не найдена")
 
-bot.run(TOKEN)
+ITEMS_PER_PAGE = 10  # сколько предметов показывать на одной странице
+
+class ShopView(View):
+    def __init__(self, ctx, items):
+        super().__init__(timeout=180)
+        self.ctx = ctx
+        self.items = items
+        self.page = 0
+        self.message = None
+        self.max_page = (len(items) - 1) // ITEMS_PER_PAGE
+
+        self.update_buttons()
+
+    def update_buttons(self):
+        self.clear_items()
+        if self.page > 0:
+            self.add_item(Button(label="◀ Назад", style=discord.ButtonStyle.primary, custom_id="prev"))
+        if self.page < self.max_page:
+            self.add_item(Button(label="Вперёд ▶", style=discord.ButtonStyle.primary, custom_id="next"))
+
+    async def send_initial(self):
+        embed = self.get_page_embed()
+        self.message = await self.ctx.send(embed=embed, view=self)
+
+    def get_page_embed(self):
+        start = self.page * ITEMS_PER_PAGE
+        end = start + ITEMS_PER_PAGE
+        page_items = self.items[start:end]
+
+        embed = Embed(title=f"Магазин (страница {self.page+1}/{self.max_page+1})", color=0x00ff00)
+        for item in page_items:
+            desc = item['description'] if item['description'] else "Без описания"
+            embed.add_field(name=f"{item['name']} | {item['price']}💰", value=desc, inline=False)
+        return embed
+
+    @discord.ui.button(label="◀ Назад", style=discord.ButtonStyle.primary, row=0)
+    async def prev(self, interaction, button):
+        if self.page > 0:
+            self.page -= 1
+            await interaction.response.edit_message(embed=self.get_page_embed(), view=self)
+        self.update_buttons()
+
+    @discord.ui.button(label="Вперёд ▶", style=discord.ButtonStyle.primary, row=0)
+    async def next(self, interaction, button):
+        if self.page < self.max_page:
+            self.page += 1
+            await interaction.response.edit_message(embed=self.get_page_embed(), view=self)
+        self.update_buttons()
+
+
+@bot.command()
+async def shop(ctx):
+    if not shop:
+        await ctx.send("Магазин пуст")
+        return
+
+    view = ShopView(ctx, shop)
+    await view.send_initial()
+
+bott.run(TOKEN)

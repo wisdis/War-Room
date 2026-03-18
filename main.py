@@ -2,6 +2,8 @@ import discord
 from discord.ext import commands
 import os
 import random
+import asyncio
+from database import add_money, get_user_items, shop
 
 # токен
 TOKEN = os.getenv("TOKEN")
@@ -20,19 +22,23 @@ async def on_ready():
 @bot.command()
 async def hello(ctx):
     privet = [
-        "Привет!"
-        "Приветствую!"
-        "Добрый день 👋"
-        "Здравствуйте!"
-        "Салют!"
+        "Привет!",
+        "Приветствую!",
+        "Добрый день 👋",
+        "Здравствуйте!",
+        "Салют!",
         "Хай!"
     ]
-    await ctx.send(choice.random(privet))
+    await ctx.send(random.choice(privet))
 
 async def give_income():
     while True:
-        for member in guild.members:
-            income = 0
+        for guild in bot.guilds:
+            for member in guild.members:
+                # логика дохода
+                pass
+
+        await asyncio.sleep(60)
 
             # доход от ролей
             for role in member.roles:

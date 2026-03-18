@@ -45,9 +45,10 @@ async def give_income():
                     if role.id in role_income:
                         income += role_income[role.id]["income"]
 
-                items = get_user_items(member.id)
+                items = get_user_items(member.id) or []
                 for item in items:
-                    income += item.get("income", 0)
+                    if isinstance(item, dict):
+                        income += item.get("income", 0)
 
                 add_money(member.id, income)
 

@@ -106,8 +106,4 @@ async def setup_role(ctx, action: str, role: discord.Role, income: int = 0, popu
         else:
             await ctx.send("Роль не найдена")
 
-for role in member.roles:
-    if role.id in role_income:
-        income += role_income[role.id]["Доход"]
-
 bot.run(TOKEN)

@@ -40,7 +40,7 @@ async def give_income():
                 # доход от ролей
                 for role in member.roles:
                     if role.id in role_income:
-                        income += role_income[role.id]
+                        income += role_income[role.id]["Доход"]
 
                 # доход от предметов
                 user_items = get_user_items(member.id)

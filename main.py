@@ -87,12 +87,28 @@ def can_buy(member, item):
 
     return True
 
-role_income = {
-    role_id: {
-        "Доход": 10,
-        "Население": 2,
-        "Стабильность": -1
-    }
-}
+role_income = {}
+
+@bot.command()
+async def setup_role(ctx, action: str, role: discord.Role, income: int = 0, population: int = 0, stability: int = 0):
+    
+    if action == "add":
+        role_income[role.id] = {
+            "Доход": income,
+            "Население": population,
+            "Стабильность": stability
+        }
+        await ctx.send("Роль добавлена")
+
+    elif action == "remove":
+        if role.id in role_income:
+            del role_income[role.id]
+            await ctx.send("Роль удалена")
+        else:
+            await ctx.send("Роль не найдена")
+
+for role in member.roles:
+    if role.id in role_income:
+        income += role_income[role.id]["Доход"]
 
 bot.run(TOKEN)

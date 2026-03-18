@@ -35,6 +35,7 @@ async def give_income():
     while True:
         for guild in bot.guilds:
             for member in guild.members:
+                income = 0
                 # логика дохода
                 pass
 

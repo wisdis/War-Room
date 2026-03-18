@@ -5,7 +5,6 @@ import random
 from datetime import datetime, timedelta
 import pytz
 import os
-from flask import Flask
 from threading import Thread
 
 # ==== Интенты и бот ====

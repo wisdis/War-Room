@@ -1,7 +1,8 @@
 import discord
 from discord.ext import commands
+import os
 
-TOKEN = "твой_токен_бота"
+TOKEN = os.getenv("TOKEN")
 
 # Intents — нужны для работы команд и событий
 intents = discord.Intents.default()

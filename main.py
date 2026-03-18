@@ -53,6 +53,7 @@ async def give_income():
                 add_money(member.id, income)
 
         await asyncio.sleep(60)
+        
 
 @bot.command()
 async def add_item(ctx):

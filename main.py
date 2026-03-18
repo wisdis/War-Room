@@ -1,24 +1,20 @@
 import discord
 from discord.ext import commands
-import os
-from dotenv import load_dotenv
-import pytz
 
-load_dotenv()
-TOKEN = os.getenv("TOKEN")
+TOKEN = "твой_токен_бота"
 
-# Префикс для команд
-client = commands.Bot(command_prefix=".")
+# Intents — нужны для работы команд и событий
+intents = discord.Intents.default()
+intents.message_content = True  # разрешаем читать сообщения для команд
 
-# Событие при запуске бота
+client = commands.Bot(command_prefix=".", intents=intents)
+
 @client.event
 async def on_ready():
     print(f'Logged in as {client.user}')
 
-# Команда hello
 @client.command()
 async def hello(ctx):
     await ctx.send("Привет!")
 
-# Запуск бота
 client.run(TOKEN)

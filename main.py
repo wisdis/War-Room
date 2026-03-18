@@ -36,9 +36,7 @@ async def give_income():
         for guild in bot.guilds:
             for member in guild.members:
                 income = 0
-                # логика дохода
-                pass
-                
+
                 # доход от ролей
                 for role in member.roles:
                     if role.id in role_income:
@@ -51,7 +49,7 @@ async def give_income():
 
                 add_money(member.id, income)
 
-    await asyncio.sleep(60)
+        await asyncio.sleep(60)
       
 @bot.command()
 async def additem(ctx):

@@ -38,8 +38,6 @@ async def give_income():
                 # логика дохода
                 pass
 
-        await asyncio.sleep(60)
-
             # доход от ролей
             for role in member.roles:
                 if role.id in role_income:
@@ -52,6 +50,8 @@ async def give_income():
 
             add_money(member.id, income)
 
+    await asyncio.sleep(60)
+      
 @bot.command()
 async def additem(ctx):
     await ctx.send("Название предмета?")
@@ -94,11 +94,13 @@ role_income = {
         "Стабильность": -1
     }
 }
+shop =[
 {
     "Название": "Фабрика",
     "Цена": 1000,
     "Баффы": {"Доход": 20},
     "Дебафф": {"Стабильность": -5}
 }
+]
 
 bot.run(TOKEN)

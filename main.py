@@ -3,7 +3,7 @@ from discord.ext import commands
 import os
 import random
 import asyncio
-from database import add_money, get_user_items, shop, get_balance, apply_item_effects
+from database import add_money, get_user_items, shop as shop_items, get_balance, apply_item_effects
 from discord.ui import View
 
 # токен
@@ -264,11 +264,11 @@ class ShopView(View):
 
 @bot.command()
 async def shop(ctx):
-    if not shop:
+    if not shop_items:
         await ctx.send("🛒 Магазин пока пуст")
         return
 
-    view = ShopView(ctx, shop)
+    view = ShopView(ctx, shop_items)
     await view.send_initial()
 
 bot.run(TOKEN)

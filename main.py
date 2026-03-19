@@ -4,8 +4,7 @@ import os
 import random
 import asyncio
 from database import add_money, get_user_items, shop, get_balance, apply_item_effects
-from discord.ui import View, Button
-from discord import Embed
+from discord.ui import View
 
 # токен
 TOKEN = os.getenv("TOKEN")
@@ -26,23 +25,23 @@ async def on_ready():
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f"Ошибка: пропущен аргумент.\nПример использования: .{ctx.command} <аргументы>")
+        await ctx.send(f"❌ Ошибка: пропущен аргумент.\nПример: .{ctx.command} <аргументы>")
     elif isinstance(error, commands.BadArgument):
-        await ctx.send(f"Ошибка: неверный тип аргумента.\nПример использования: .{ctx.command} <аргументы>")
+        await ctx.send(f"❌ Ошибка: неверный тип аргумента.\nПример: .{ctx.command} <аргументы>")
     elif isinstance(error, commands.CommandNotFound):
-        await ctx.send("Команда не найдена. Используй .help чтобы увидеть все команды")
+        await ctx.send("❌ Команда не найдена. Используй `.help` чтобы увидеть все команды")
     else:
-        await ctx.send(f"Произошла ошибка: {str(error)}")
+        await ctx.send(f"❌ Произошла ошибка: {str(error)}")
 
 @bot.command()
 async def привет(ctx):
     ответы = [
-        "Привет!",
-        "Приветствую!",
+        "Привет! 👋",
+        "Приветствую! ✨",
         "Добрый день 👋",
-        "Здравствуйте!",
-        "Салют!",
-        "Хай!"
+        "Здравствуйте! 🌟",
+        "Салют! 🔥",
+        "Хай! 🚀"
     ]
     await ctx.send(random.choice(ответы))
 
@@ -66,7 +65,6 @@ async def give_income():
                 add_money(member.id, income)
 
         await asyncio.sleep(60)
-        
 
 @bot.command()
 async def add_item(ctx):
@@ -78,7 +76,7 @@ async def add_item(ctx):
     try:
         price_value = int(price.content)
     except:
-        await ctx.send("Введите число")
+        await ctx.send("❌ Введите число")
         return
 
     await ctx.send("Описание (или 'Skip')")
@@ -129,7 +127,7 @@ async def add_item(ctx):
     }
 
     shop.append(item)
-    await ctx.send(f"Предмет {item['name']} создан")
+    await ctx.send(f"✅ Предмет **{item['name']}** успешно создан!")
 
 def can_buy(member, item):
     if item["allowed_roles"]:
@@ -141,25 +139,24 @@ def can_buy(member, item):
 
 @bot.command()
 async def buy(ctx, *, item_name):
-    # ищем предмет
     item = next((i for i in shop if i["name"].lower() == item_name.lower()), None)
     if not item:
-        await ctx.send("Такого предмета нет")
+        await ctx.send("❌ Такого предмета нет в магазине")
         return
 
     if not can_buy(ctx.author, item):
-        await ctx.send("Вы не можете купить этот предмет")
+        await ctx.send("❌ Вы не можете купить этот предмет")
         return
 
     balance = get_balance(ctx.author.id)
     if balance < item["price"]:
-        await ctx.send("У вас недостаточно денег")
+        await ctx.send("❌ У вас недостаточно денег 💰")
         return
 
-    add_money(ctx.author.id, -item["price"])  # списываем деньги
-    apply_item_effects(ctx.author.id, item)   # применяем эффекты (баффы/дебаффы)
+    add_money(ctx.author.id, -item["price"])
+    apply_item_effects(ctx.author.id, item)
 
-    await ctx.send(f"Вы купили {item['name']}")
+    await ctx.send(f"✅ Вы успешно купили **{item['name']}**!")
 
 @bot.command()
 async def setup_role(ctx, action: str, role: discord.Role, income: int = 0, population: int = 0, stability: int = 0):
@@ -170,15 +167,43 @@ async def setup_role(ctx, action: str, role: discord.Role, income: int = 0, popu
             "population": population,
             "stability": stability
         }
-        await ctx.send(f"Роль {role.name} добавлена")
+        await ctx.send(f"✅ Роль **{role.name}** добавлена с эффектами!")
     elif action == "remove":
         if role.id in role_income:
             del role_income[role.id]
-            await ctx.send(f"Роль {role.name} удалена")
+            await ctx.send(f"✅ Роль **{role.name}** удалена")
         else:
-            await ctx.send("Роль не найдена")
+            await ctx.send("❌ Роль не найдена")
 
-ITEMS_PER_PAGE = 10  # сколько предметов показывать на одной странице
+# ==================== НОВАЯ КОМАНДА .роли ====================
+@bot.command(name="роли")
+async def view_roles(ctx):
+    """Просмотр всех добавленных ролей + их баффы/дебаффы"""
+    if not role_income:
+        await ctx.send("📭 Пока нет добавленных ролей с эффектами")
+        return
+
+    embed = discord.Embed(title="📋 Добавленные роли и их эффекты", color=0x00ff00)
+    for role_id, data in role_income.items():
+        role = ctx.guild.get_role(role_id)
+        role_name = role.name if role else f"Неизвестная роль (ID: {role_id})"
+
+        income = data.get("income", 0)
+        population = data.get("population", 0)
+        stability = data.get("stability", 0)
+
+        embed.add_field(
+            name=f"👑 {role_name}",
+            value=(
+                f"💰 **Доход:** {income:+} в минуту\n"
+                f"👥 **Население:** {population:+}\n"
+                f"🏛️ **Стабильность:** {stability:+}"
+            ),
+            inline=False
+        )
+    await ctx.send(embed=embed)
+
+ITEMS_PER_PAGE = 10
 
 class ShopView(View):
     def __init__(self, ctx, items):
@@ -187,54 +212,63 @@ class ShopView(View):
         self.items = items
         self.page = 0
         self.message = None
-        self.max_page = (len(items) - 1) // ITEMS_PER_PAGE
-
+        self.max_pages = (len(items) + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE if items else 0
         self.update_buttons()
-
-    def update_buttons(self):
-        self.clear_items()
-        if self.page > 0:
-            self.add_item(Button(label="◀ Назад", style=discord.ButtonStyle.primary, custom_id="prev"))
-        if self.page < self.max_page:
-            self.add_item(Button(label="Вперёд ▶", style=discord.ButtonStyle.primary, custom_id="next"))
-
-    async def send_initial(self):
-        embed = self.get_page_embed()
-        self.message = await self.ctx.send(embed=embed, view=self)
 
     def get_page_embed(self):
         start = self.page * ITEMS_PER_PAGE
         end = start + ITEMS_PER_PAGE
         page_items = self.items[start:end]
 
-        embed = Embed(title=f"Магазин (страница {self.page+1}/{self.max_page+1})", color=0x00ff00)
+        embed = discord.Embed(
+            title=f"🛒 Магазин (страница {self.page + 1}/{self.max_pages})",
+            color=0x00ff00
+        )
         for item in page_items:
             desc = item['description'] if item['description'] else "Без описания"
-            embed.add_field(name=f"{item['name']} | {item['price']}💰", value=desc, inline=False)
+            embed.add_field(
+                name=f"{item['name']} | {item['price']}💰",
+                value=desc,
+                inline=False
+            )
         return embed
 
-    @discord.ui.button(label="◀ Назад", style=discord.ButtonStyle.primary, row=0)
-    async def prev(self, interaction, button):
+    def update_buttons(self):
+        """Отключаем кнопки, когда нельзя листать"""
+        for item in self.children:
+            if item.label == "◀ Назад":
+                item.disabled = (self.page == 0)
+            elif item.label == "Вперёд ▶":
+                item.disabled = (self.page >= self.max_pages - 1)
+
+    @discord.ui.button(label="◀ Назад", style=discord.ButtonStyle.primary)
+    async def prev(self, interaction):
         if self.page > 0:
             self.page -= 1
-            await interaction.response.edit_message(embed=self.get_page_embed(), view=self)
-        self.update_buttons()
+            self.update_buttons()
+            embed = self.get_page_embed()
+            await interaction.response.edit_message(embed=embed, view=self)
 
-    @discord.ui.button(label="Вперёд ▶", style=discord.ButtonStyle.primary, row=0)
-    async def next(self, interaction, button):
-        if self.page < self.max_page:
+    @discord.ui.button(label="Вперёд ▶", style=discord.ButtonStyle.primary)
+    async def next(self, interaction):
+        if self.page < self.max_pages - 1:
             self.page += 1
-            await interaction.response.edit_message(embed=self.get_page_embed(), view=self)
-        self.update_buttons()
+            self.update_buttons()
+            embed = self.get_page_embed()
+            await interaction.response.edit_message(embed=embed, view=self)
+
+    async def send_initial(self):
+        embed = self.get_page_embed()
+        self.message = await self.ctx.send(embed=embed, view=self)
 
 
 @bot.command()
 async def shop(ctx):
     if not shop:
-        await ctx.send("Магазин пуст")
+        await ctx.send("🛒 Магазин пока пуст")
         return
 
     view = ShopView(ctx, shop)
     await view.send_initial()
 
-bott.run(TOKEN)
+bot.run(TOKEN)

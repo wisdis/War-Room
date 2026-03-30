@@ -1,13 +1,68 @@
 import discord
-import !shop.py import commands
 from discord.ext import commands
 import os
 import random
 import asyncio
-from database import add_money, get_user_items, shop as shop_items, get_balance, apply_item_effects
 from discord.ui import View
 
-# токен
+# ==========================
+# DATABASE (встроено в main.py)
+# ==========================
+
+# Список всех предметов в магазине
+shop_items = []
+
+# Предметы каждого пользователя
+# Формат: {user_id: [item_dict, ...]}
+user_items = {}
+
+# Баланс пользователей
+# Формат: {user_id: int}
+user_balance = {}
+
+# Дополнительные параметры пользователя: доход, население, стабильность
+# Формат: {user_id: {"income": int, "population": int, "stability": int}}
+user_stats = {}
+
+def add_money(user_id, amount):
+    if user_id not in user_balance:
+        user_balance[user_id] = 0
+    user_balance[user_id] += amount
+    if user_balance[user_id] < 0:
+        user_balance[user_id] = 0
+
+def get_balance(user_id):
+    return user_balance.get(user_id, 0)
+
+def get_user_items(user_id):
+    return user_items.get(user_id, [])
+
+def apply_item_effects(user_id, item):
+    if user_id not in user_items:
+        user_items[user_id] = []
+    user_items[user_id].append(item)
+
+    if user_id not in user_stats:
+        user_stats[user_id] = {"income": 0, "population": 0, "stability": 0}
+
+    for key, value in item.get("buffs", {}).items():
+        if key in user_stats[user_id]:
+            user_stats[user_id][key] += value
+
+    for key, value in item.get("debuffs", {}).items():
+        if key in user_stats[user_id]:
+            user_stats[user_id][key] += value
+
+def get_user_stats(user_id):
+    if user_id not in user_stats:
+        user_stats[user_id] = {"income": 0, "population": 0, "stability": 0}
+    return user_stats[user_id]
+
+
+# ==========================
+# DISCORD BOT
+# ==========================
+
 TOKEN = os.getenv("TOKEN")
 
 intents = discord.Intents.default()
@@ -54,6 +109,7 @@ async def give_income():
                     continue
 
                 income = 0
+
                 for role in member.roles:
                     if role.id in role_income:
                         income += role_income[role.id]["income"]
@@ -74,6 +130,7 @@ async def add_item(ctx):
 
     await ctx.send("Цена?")
     price = await bot.wait_for("message", check=lambda m: m.author == ctx.author and m.channel == ctx.channel)
+
     try:
         price_value = int(price.content)
     except:
@@ -85,6 +142,7 @@ async def add_item(ctx):
 
     await ctx.send("Разрешённые роли (через пробел, или 'everyone')?")
     allowed = await bot.wait_for("message", check=lambda m: m.author == ctx.author and m.channel == ctx.channel)
+
     allowed_roles = []
     if allowed.content.lower() != "everyone":
         for role in ctx.guild.roles:
@@ -93,18 +151,19 @@ async def add_item(ctx):
 
     await ctx.send("Запрещённые роли (через пробел, или 'none')?")
     blocked = await bot.wait_for("message", check=lambda m: m.author == ctx.author and m.channel == ctx.channel)
+
     blocked_roles = []
     if blocked.content.lower() != "none":
         for role in ctx.guild.roles:
             if role.name in blocked.content.split():
                 blocked_roles.append(role.id)
 
-    # Баффы
     buffs = {}
     debuffs = {}
 
     await ctx.send("Баффы через запятую (income=10,population=5,stability=2) или 'skip'?")
     buff_input = await bot.wait_for("message", check=lambda m: m.author == ctx.author and m.channel == ctx.channel)
+
     if buff_input.content.lower() != "skip":
         for pair in buff_input.content.split(","):
             key, value = pair.split("=")
@@ -112,6 +171,7 @@ async def add_item(ctx):
 
     await ctx.send("Дебаффы через запятую (income=-5,population=-2,stability=-1) или 'skip'?")
     debuff_input = await bot.wait_for("message", check=lambda m: m.author == ctx.author and m.channel == ctx.channel)
+
     if debuff_input.content.lower() != "skip":
         for pair in debuff_input.content.split(","):
             key, value = pair.split("=")
@@ -127,20 +187,23 @@ async def add_item(ctx):
         "debuffs": debuffs
     }
 
-    shop.append(item)
+    shop_items.append(item)
     await ctx.send(f"✅ Предмет **{item['name']}** успешно создан!")
 
 def can_buy(member, item):
     if item["allowed_roles"]:
         if not any(role.id in item["allowed_roles"] for role in member.roles):
             return False
+
     if any(role.id in item["blocked_roles"] for role in member.roles):
         return False
+
     return True
 
 @bot.command()
 async def buy(ctx, *, item_name):
-    item = next((i for i in shop if i["name"].lower() == item_name.lower()), None)
+    item = next((i for i in shop_items if i["name"].lower() == item_name.lower()), None)
+
     if not item:
         await ctx.send("❌ Такого предмета нет в магазине")
         return
@@ -162,6 +225,7 @@ async def buy(ctx, *, item_name):
 @bot.command()
 async def setup_role(ctx, action: str, role: discord.Role, income: int = 0, population: int = 0, stability: int = 0):
     action = action.lower()
+
     if action == "add":
         role_income[role.id] = {
             "income": income,
@@ -169,6 +233,7 @@ async def setup_role(ctx, action: str, role: discord.Role, income: int = 0, popu
             "stability": stability
         }
         await ctx.send(f"✅ Роль **{role.name}** добавлена с эффектами!")
+
     elif action == "remove":
         if role.id in role_income:
             del role_income[role.id]
@@ -176,15 +241,14 @@ async def setup_role(ctx, action: str, role: discord.Role, income: int = 0, popu
         else:
             await ctx.send("❌ Роль не найдена")
 
-# ==================== НОВАЯ КОМАНДА .роли ====================
 @bot.command(name="роли")
 async def view_roles(ctx):
-    """Просмотр всех добавленных ролей + их баффы/дебаффы"""
     if not role_income:
         await ctx.send("📭 Пока нет добавленных ролей с эффектами")
         return
 
     embed = discord.Embed(title="📋 Добавленные роли и их эффекты", color=0x00ff00)
+
     for role_id, data in role_income.items():
         role = ctx.guild.get_role(role_id)
         role_name = role.name if role else f"Неизвестная роль (ID: {role_id})"
@@ -202,6 +266,7 @@ async def view_roles(ctx):
             ),
             inline=False
         )
+
     await ctx.send(embed=embed)
 
 ITEMS_PER_PAGE = 10
@@ -225,6 +290,7 @@ class ShopView(View):
             title=f"🛒 Магазин (страница {self.page + 1}/{self.max_pages})",
             color=0x00ff00
         )
+
         for item in page_items:
             desc = item['description'] if item['description'] else "Без описания"
             embed.add_field(
@@ -232,10 +298,10 @@ class ShopView(View):
                 value=desc,
                 inline=False
             )
+
         return embed
 
     def update_buttons(self):
-        """Отключаем кнопки, когда нельзя листать"""
         for item in self.children:
             if item.label == "◀ Назад":
                 item.disabled = (self.page == 0)
@@ -243,7 +309,7 @@ class ShopView(View):
                 item.disabled = (self.page >= self.max_pages - 1)
 
     @discord.ui.button(label="◀ Назад", style=discord.ButtonStyle.primary)
-    async def prev(self, interaction):
+    async def prev(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.page > 0:
             self.page -= 1
             self.update_buttons()
@@ -251,7 +317,7 @@ class ShopView(View):
             await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label="Вперёд ▶", style=discord.ButtonStyle.primary)
-    async def next(self, interaction):
+    async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.page < self.max_pages - 1:
             self.page += 1
             self.update_buttons()
@@ -262,7 +328,6 @@ class ShopView(View):
         embed = self.get_page_embed()
         self.message = await self.ctx.send(embed=embed, view=self)
 
-
 @bot.command()
 async def shop(ctx):
     if not shop_items:
@@ -271,5 +336,15 @@ async def shop(ctx):
 
     view = ShopView(ctx, shop_items)
     await view.send_initial()
+
+@bot.command()
+async def balance(ctx):
+    bal = get_balance(ctx.author.id)
+    await ctx.send(f"💰 Твой баланс: **{bal}** монет")
+
+@bot.command()
+async def bal(ctx):
+    bal = get_balance(ctx.author.id)
+    await ctx.send(f"💰 Твой баланс: **{bal}** монет")
 
 bot.run(TOKEN)

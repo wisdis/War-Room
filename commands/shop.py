@@ -86,5 +86,5 @@ class Shop(commands.Cog):
         apply_item_effects(ctx.author.id, item)
         await ctx.send(f"✅ Ты купил **{item['name']}**!")
 
-def setup(bot):
-    bot.add_cog(Shop(bot))
+async def setup(bot):
+    await bot.add_cog(Shop(bot))

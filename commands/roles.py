@@ -37,7 +37,7 @@ class Roles(commands.Cog):
 
             embed.add_field(
                 name=f"👑 {name}",
-                value=f"💰 Доход: {d['income']:+}\n👥 Население: {d['population']:+}\n🏛️ Стабильность: {d['stability']:+}",
+                value=f"💰 Доход: {d['income']:+d}\n👥 Население: {d['population']:+}\n🏛️ Стабильность: {d['stability']:+}",
                 inline=False
             )
 

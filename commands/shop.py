@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from discord.ui import View, Button
-from storage import shop_items, get_user_items, add_money, apply_item_effects, get_balance
+from storage import get_shop_items, get_user_items, add_money, apply_item_effects, get_balance
 
 ITEMS_PER_PAGE = 10
 

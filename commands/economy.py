@@ -35,5 +35,5 @@ class Economy(commands.Cog):
         add_money(member.id, -amount)
         await ctx.send(f"Забрал {amount} монет у пользователя {member.mention}")
 
-def setup(bot):
-    bot.add_cog(Economy(bot))
+async def setup(bot):
+    await bot.add_cog(Economy(bot))

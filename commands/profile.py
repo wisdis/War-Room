@@ -15,7 +15,7 @@ class Profile(commands.Cog):
         stats = get_user_stats(member.id)
         items = get_user_items(member.id)
 
-        embed = discord.Embed(title=f"👤 Профиль: {member.name}", color=0x00ff00)
+        embed = discord.Embed(title=f"👤 Профиль: {member.display_name}", color=0x00ff00)
         embed.add_field(name="💰 Баланс", value=str(bal), inline=True)
         embed.add_field(name="📈 Доход/мин", value=str(stats["income"]), inline=True)
         embed.add_field(name="👥 Население", value=str(stats["population"]), inline=True)

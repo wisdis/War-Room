@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import random
 
+
 class Say(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -33,6 +34,7 @@ class Say(commands.Cog):
         color = random.randint(0, 0xFFFFFF)
         embed = discord.Embed(description=message, color=color)
         await channel.send(embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(Say(bot))

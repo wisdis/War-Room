@@ -3,6 +3,8 @@ from discord.ext import commands, tasks
 import os
 import asyncio
 from storage import get_user_stats, add_money, role_income
+from storage import init_db
+init_db()
 
 TOKEN = os.getenv("TOKEN")
 PREFIX = "."

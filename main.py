@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 import os
+import asyncio
 from storage import get_user_stats, add_money, role_income
 
 TOKEN = os.getenv("TOKEN")
@@ -10,11 +11,21 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-# ←←← СНАЧАЛА создаём бота
-bot = commands.Bot(command_prefix=PREFIX, intents=intents)
+# ==================== ЗАГРУЗКА КОМАНД ====================
+async def load_extensions():
+    for filename in os.listdir("./commands"):
+        if filename.endswith(".py") and filename != "__init__.py":
+            try:
+                await bot.load_extension(f"commands.{filename[:-3]}")
+                print(f"✅ Загружен: commands.{filename[:-3]}")
+            except Exception as e:
+                print(f"❌ Ошибка при загрузке commands.{filename[:-3]} → {e}")
 
-# ←←← ТОЛЬКО ПОСЛЕ ЭТОГО загружаем команды
-bot.load_extension("commands")        # ← вот эта строка теперь на своём месте
+# ==================== SETUP HOOK ====================
+@bot.event
+async def setup_hook():
+    await load_extensions()
+    print("Все расширения (cogs) успешно загружены!")
 
 @bot.event
 async def on_ready():

@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from storage import get_all_role_income
+from storage import set_role_income, remove_role_income, get_all_role_income
 
 class Roles(commands.Cog):
     def __init__(self, bot):
@@ -28,6 +28,8 @@ class Roles(commands.Cog):
 
     @commands.command(name="роли")
     async def view_roles(self, ctx):
+        role_income = get_all_role_income()
+
         if not role_income:
             await ctx.send("📭 Пока нет добавленных ролей с эффектами")
             return

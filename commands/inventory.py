@@ -25,5 +25,5 @@ class Inventory(commands.Cog):
 
         await ctx.send(msg)
 
-def setup(bot):
-    bot.add_cog(Inventory(bot))
+async def setup(bot):
+    await bot.add_cog(Inventory(bot))

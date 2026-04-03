@@ -53,18 +53,19 @@ class Shop(commands.Cog):
 
     @commands.command()
     async def shop(self, ctx):
-        items = get_shop_items()
+        items = get_shop_items()  # Корректная переменная items
         
-        if not shop_items:
+        if not items:
             await ctx.send("🛒 Магазин пока пуст")
             return
 
-        view = ShopView(ctx, shop_items)
+        view = ShopView(ctx, items)
         await ctx.send(embed=view.get_page_embed(), view=view)
 
     @commands.command()
     async def buy(self, ctx, *, item_name):
-        item = next((i for i in shop_items if i['name'].lower() == item_name.lower()), None)
+        items = get_shop_items()  # Получаем список из базы
+        item = next((i for i in items if i['name'].lower() == item_name.lower()), None)
         if not item:
             await ctx.send("❌ Такого предмета нет")
             return

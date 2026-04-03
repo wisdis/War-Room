@@ -1,93 +1,110 @@
-import discord
+import sqlite3
 from discord.ext import commands
-from discord.ui import View, Button
-from storage import get_shop_items, get_user_items, add_money, apply_item_effects, get_balance
+import discord
 
-ITEMS_PER_PAGE = 10
-
-class ShopView(View):
-    def __init__(self, ctx, items):
-        super().__init__(timeout=180)
-        self.ctx = ctx
-        self.items = items
-        self.page = 0
-        self.max_pages = max((len(items) + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE, 1)
-        self.update_buttons()
-
-    def get_page_embed(self):
-        start = self.page * ITEMS_PER_PAGE
-        end = start + ITEMS_PER_PAGE
-        page_items = self.items[start:end]
-
-        embed = discord.Embed(title=f"🛒 Магазин (страница {self.page + 1}/{self.max_pages})", color=0x00ff00)
-        for item in page_items:
-            desc = item.get("description", "Без описания")
-            embed.add_field(name=f"{item['name']} | {item['price']}💰", value=desc, inline=False)
-        return embed
-
-    def update_buttons(self):
-        for child in self.children:
-            if isinstance(child, Button):
-                if child.label == "◀ Назад":
-                    child.disabled = self.page == 0
-                elif child.label == "Вперёд ▶":
-                    child.disabled = self.page >= self.max_pages - 1
-
-    @discord.ui.button(label="◀ Назад", style=discord.ButtonStyle.primary)
-    async def prev_page(self, interaction: discord.Interaction, button: Button):
-        if self.page > 0:
-            self.page -= 1
-            self.update_buttons()
-            await interaction.response.edit_message(embed=self.get_page_embed(), view=self)
-
-    @discord.ui.button(label="Вперёд ▶", style=discord.ButtonStyle.primary)
-    async def next_page(self, interaction: discord.Interaction, button: Button):
-        if self.page < self.max_pages - 1:
-            self.page += 1
-            self.update_buttons()
-            await interaction.response.edit_message(embed=self.get_page_embed(), view=self)
+DB_PATH = "database.db"  # путь к твоей базе
 
 class Shop(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    # ===== Получение всех предметов =====
+    def get_shop_items(self):
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT name, price, description, buffs, debuffs, allowed_roles, blocked_roles, quantity FROM shop")
+        items = cursor.fetchall()
+        conn.close()
+        # Преобразуем в список словарей
+        result = []
+        for i in items:
+            result.append({
+                "name": i[0],
+                "price": i[1],
+                "description": i[2],
+                "buffs": eval(i[3]) if i[3] else {},
+                "debuffs": eval(i[4]) if i[4] else {},
+                "allowed_roles": eval(i[5]) if i[5] else [],
+                "blocked_roles": eval(i[6]) if i[6] else [],
+                "quantity": i[7] or 1
+            })
+        return result
+
+    # ===== Команда: показать магазин =====
     @commands.command()
     async def shop(self, ctx):
-        items = get_shop_items()  # Корректная переменная items
-        
+        items = self.get_shop_items()
         if not items:
-            await ctx.send("🛒 Магазин пока пуст")
+            await ctx.send("Магазин пуст")
             return
+        msg = "\n".join([f"{i['name']} — {i['price']} монет" for i in items])
+        await ctx.send(msg)
 
-        view = ShopView(ctx, items)
-        await ctx.send(embed=view.get_page_embed(), view=view)
-
+    # ===== Команда: добавить предмет =====
     @commands.command()
-    async def buy(self, ctx, *, item_name):
-        items = get_shop_items()  # Получаем список из базы
-        item = next((i for i in items if i['name'].lower() == item_name.lower()), None)
+    async def add_item(self, ctx, name, price: int, description, *, effects):
+        # Разбор эффектов: attack+10, defense-5, income+20, stability+5, population-2
+        buffs = {}
+        debuffs = {}
+        allowed_roles = []
+        blocked_roles = []
+        quantity = 1
+
+        for part in effects.split(","):
+            part = part.strip()
+            if part.startswith("attack+") or part.startswith("defense+") or part.startswith("income+") or part.startswith("stability+") or part.startswith("population+"):
+                key, val = part.split("+")
+                buffs[key] = int(val)
+            elif part.startswith("attack-") or part.startswith("defense-") or part.startswith("income-") or part.startswith("stability-") or part.startswith("population-"):
+                key, val = part.split("-")
+                debuffs[key] = int(val)
+            elif part.startswith("allowed_roles:"):
+                allowed_roles = [int(x) for x in part.replace("allowed_roles:", "").split(";")]
+            elif part.startswith("blocked_roles:"):
+                blocked_roles = [int(x) for x in part.replace("blocked_roles:", "").split(";")]
+            elif part.startswith("quantity:"):
+                quantity = int(part.replace("quantity:", ""))
+
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT OR REPLACE INTO shop (name, price, description, buffs, debuffs, allowed_roles, blocked_roles, quantity)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (name, price, description, str(buffs), str(debuffs), str(allowed_roles), str(blocked_roles), quantity))
+        conn.commit()
+        conn.close()
+        await ctx.send(f"✅ Предмет **{name}** добавлен в магазин")
+
+    # ===== Команда: удалить предмет =====
+    @commands.command()
+    async def remove_item(self, ctx, *, name):
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM shop WHERE LOWER(name)=?", (name.lower(),))
+        conn.commit()
+        conn.close()
+        await ctx.send(f"🗑️ Предмет **{name}** удалён из магазина")
+
+    # ===== Команда: информация о предмете =====
+    @commands.command()
+    async def item_info(self, ctx, *, name):
+        items = self.get_shop_items()
+        item = next((i for i in items if i["name"].lower() == name.lower()), None)
         if not item:
-            await ctx.send("❌ Такого предмета нет")
+            await ctx.send("❌ Предмет не найден")
             return
 
-        # Проверка ролей
-        allowed = item.get("allowed_roles", [])
-        blocked = item.get("blocked_roles", [])
-        if allowed and not any(role.id in allowed for role in ctx.author.roles):
-            await ctx.send("❌ Ты не можешь купить этот предмет")
-            return
-        if any(role.id in blocked for role in ctx.author.roles):
-            await ctx.send("❌ Ты не можешь купить этот предмет")
-            return
+        embed = discord.Embed(title=f"Информация о {item['name']}", color=0x00ff00)
+        embed.add_field(name="Цена", value=str(item["price"]))
+        embed.add_field(name="Описание", value=item["description"] or "Отсутствует", inline=False)
+        embed.add_field(name="Количество", value=str(item["quantity"]))
+        embed.add_field(name="Баффы", value=str(item["buffs"]) or "нет", inline=False)
+        embed.add_field(name="Дебаффы", value=str(item["debuffs"]) or "нет", inline=False)
+        embed.add_field(name="Разрешённые роли", value=", ".join(str(r) for r in item["allowed_roles"]) or "нет", inline=False)
+        embed.add_field(name="Заблокированные роли", value=", ".join(str(r) for r in item["blocked_roles"]) or "нет", inline=False)
 
-        bal = get_balance(ctx.author.id)
-        if bal < item['price']:
-            await ctx.send("❌ Недостаточно денег")
-            return
+        await ctx.send(embed=embed)
 
-        add_money(ctx.author.id, -item['price'])
-        apply_item_effects(ctx.author.id, item)
-        await ctx.send(f"✅ Ты купил **{item['name']}**!")
-
-async def setup(bot):
-    await bot.add_cog(Shop(bot))
+# ===== Регистрация COG =====
+def setup(bot):
+    bot.add_cog(Shop(bot))

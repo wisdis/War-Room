@@ -8,6 +8,18 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
+    CREATE TABLE IF NOT EXISTS shop (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    price INTEGER NOT NULL,
+    description TEXT,
+    buffs TEXT,
+    debuffs TEXT,
+    allowed_roles TEXT,
+    blocked_roles TEXT,
+    quantity INTEGER DEFAULT 1
+);
+
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
         user_id INTEGER PRIMARY KEY,

@@ -1,4 +1,5 @@
 # данные
+role_income = {}
 shop_items = []
 user_items = {}      # {user_id: [item_dict, ...]}
 user_balance = {}    # {user_id: int}

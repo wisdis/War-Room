@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from storage import get_user_items, get_user_stats
+from storage import get_user_items, get_user_stats, get_all_role_income
 
 class Inventory(commands.Cog):
     def __init__(self, bot):

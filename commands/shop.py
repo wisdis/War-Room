@@ -53,6 +53,8 @@ class Shop(commands.Cog):
 
     @commands.command()
     async def shop(self, ctx):
+        items = get_shop_items()
+        
         if not shop_items:
             await ctx.send("🛒 Магазин пока пуст")
             return

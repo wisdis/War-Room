@@ -10,12 +10,11 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
+# ←←← СНАЧАЛА создаём бота
 bot = commands.Bot(command_prefix=PREFIX, intents=intents)
 
-# загрузка команд
-for f in os.listdir("./commands"):
-    if f.endswith(".py") and f != "__init__.py":
-        bot.load_extension(f"commands.{f[:-3]}")
+# ←←← ТОЛЬКО ПОСЛЕ ЭТОГО загружаем команды
+bot.load_extension("commands")        # ← вот эта строка теперь на своём месте
 
 @bot.event
 async def on_ready():
@@ -26,13 +25,13 @@ async def on_ready():
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f"❌ Пропущен аргумент. Пример: .{ctx.command} <аргументы>")
+        await ctx.send(f"Пропущен аргумент. Пример: .{ctx.command} <аргументы>")
     elif isinstance(error, commands.BadArgument):
-        await ctx.send(f"❌ Неверный тип аргумента. Пример: .{ctx.command} <аргументы>")
+        await ctx.send(f"Неверный тип аргумента. Пример: .{ctx.command} <аргументы>")
     elif isinstance(error, commands.CommandNotFound):
-        await ctx.send("❌ Команда не найдена. Используй `.help`")
+        await ctx.send("Команда не найдена. Используй `.help`")
     else:
-        await ctx.send(f"❌ Ошибка: {error}")
+        await ctx.send(f"Ошибка: {error}")
 
 # доход по ролям и предметам
 @tasks.loop(minutes=1)

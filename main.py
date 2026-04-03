@@ -11,6 +11,8 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
+bot = commands.Bot(command_prefix=PREFIX, intents=intents)
+
 # ==================== ЗАГРУЗКА КОМАНД ====================
 async def load_extensions():
     for filename in os.listdir("./commands"):

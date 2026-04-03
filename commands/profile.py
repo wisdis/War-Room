@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from storage import get_balance, get_user_stats, get_user_items
+from storage import get_balance, get_user_stats, get_user_items, get_all_role_income
 
 
 class Profile(commands.Cog):

@@ -18,12 +18,15 @@ bot = commands.Bot(command_prefix=PREFIX, intents=intents)
 # ==================== ДОХОД ПО РОЛЯМ И ПРЕДМЕТАМ ====================
 @tasks.loop(minutes=1)
 async def give_income():
+    role_income = get_all_role_income()
+
     for guild in bot.guilds:
         for member in guild.members:
             if member.bot:
                 continue
 
             income = 0
+
             for role in member.roles:
                 if role.id in role_income:
                     income += role_income[role.id].get("income", 0)

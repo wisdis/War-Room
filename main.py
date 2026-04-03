@@ -6,8 +6,6 @@ from storage import get_user_stats, add_money, role_income
 TOKEN = os.getenv("TOKEN")
 PREFIX = "."
 
-bot.load_extension("commands")
-
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True

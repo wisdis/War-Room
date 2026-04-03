@@ -10,28 +10,40 @@ class Say(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def say(self, ctx, *, message: str):
-        await ctx.message.delete()
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            await ctx.send("⚠️ У меня нет прав на удаление сообщений!")
         await ctx.send(message)
 
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def sayto(self, ctx, channel: discord.TextChannel, *, message: str):
-        await ctx.message.delete()
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            await ctx.send("⚠️ У меня нет прав на удаление сообщений!")
         await channel.send(message)
 
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def sayraw(self, ctx, *, message: str):
-        await ctx.message.delete()
-        color = random.randint(0, 0xFFFFFF)
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            await ctx.send("⚠️ У меня нет прав на удаление сообщений!")
+        color = discord.Colour.random()
         embed = discord.Embed(description=message, color=color)
         await ctx.send(embed=embed)
 
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def saytoraw(self, ctx, channel: discord.TextChannel, *, message: str):
-        await ctx.message.delete()
-        color = random.randint(0, 0xFFFFFF)
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            await ctx.send("⚠️ У меня нет прав на удаление сообщений!")
+        color = discord.Colour.random()
         embed = discord.Embed(description=message, color=color)
         await channel.send(embed=embed)
 

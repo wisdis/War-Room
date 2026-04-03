@@ -33,3 +33,6 @@ class Economy(commands.Cog):
             await ctx.send("❌ Сумма должна быть больше 0")
             return
         add_money(member.id, -
+
+def setup(bot):
+    bot.add_cog(Economy(bot))

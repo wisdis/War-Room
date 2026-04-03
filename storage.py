@@ -8,6 +8,12 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
+    ALTER TABLE shop ADD COLUMN buffs TEXT DEFAULT '{}';
+ALTER TABLE shop ADD COLUMN debuffs TEXT DEFAULT '{}';
+ALTER TABLE shop ADD COLUMN allowed_roles TEXT DEFAULT '[]';
+ALTER TABLE shop ADD COLUMN blocked_roles TEXT DEFAULT '[]';
+ALTER TABLE shop ADD COLUMN quantity INTEGER DEFAULT 1;
+
     CREATE TABLE IF NOT EXISTS shop (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,

@@ -32,7 +32,8 @@ class Economy(commands.Cog):
         if amount <= 0:
             await ctx.send("❌ Сумма должна быть больше 0")
             return
-        add_money(member.id, -
+        add_money(member.id, -amount)
+        await ctx.send(f"Забрал {amount} монет у пользователя {member.mention}")
 
 def setup(bot):
     bot.add_cog(Economy(bot))

@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from storage import role_income
+from storage import get_all_role_income
 
 class Roles(commands.Cog):
     def __init__(self, bot):

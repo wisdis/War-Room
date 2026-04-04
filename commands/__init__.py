@@ -9,4 +9,4 @@ def setup(bot):
     bot.add_cog(Inventory(bot))
     bot.add_cog(Shop(bot))
     bot.add_cog(Roles(bot))
-    bot.add.cog(Profile(bot))
+    bot.add_cog(Profile(bot))

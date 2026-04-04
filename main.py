@@ -10,8 +10,6 @@ init_db()
 TOKEN = os.getenv("TOKEN")
 PREFIX = "."
 
-bot.load_extension("commands.shop")
-
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True

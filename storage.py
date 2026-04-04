@@ -40,6 +40,7 @@ def init_db():
         blocked_roles TEXT,
         buffs TEXT,
         debuffs TEXT
+        quantity INTEGER DEFAULT 1
     )
     """)
 

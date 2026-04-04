@@ -148,6 +148,92 @@ async def add_item(self, ctx):
 
         await ctx.send(embed=embed)
 
+@commands.command()
+@commands.has_permissions(administrator=True)
+async def edit_item(self, ctx, name: str, field: str, *, new_value):
+    """Редактирует один параметр предмета через команду"""
+
+    # Проверяем предмет
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("SELECT name, price, description, buffs, debuffs, allowed_roles, blocked_roles, quantity FROM shop WHERE LOWER(name)=?", (name.lower(),))
+    row = cur.fetchone()
+    if not row:
+        await ctx.send("❌ Предмет не найден")
+        conn.close()
+        return
+
+    # Преобразуем текущие данные
+    item = {
+        "name": row[0],
+        "price": row[1],
+        "description": row[2],
+        "buffs": eval(row[3]) if row[3] else {},
+        "debuffs": eval(row[4]) if row[4] else {},
+        "allowed_roles": eval(row[5]) if row[5] else [],
+        "blocked_roles": eval(row[6]) if row[6] else [],
+        "quantity": row[7] or 1
+    }
+
+    # Меняем поле
+    field = field.lower()
+    if field == "name":
+        item["name"] = new_value
+    elif field == "price":
+        try:
+            item["price"] = int(new_value)
+        except:
+            await ctx.send("❌ Цена должна быть числом")
+            conn.close()
+            return
+    elif field == "description":
+        item["description"] = new_value
+    elif field == "buffs":
+        buffs = {}
+        if new_value.lower() != "none":
+            for part in new_value.split(","):
+                part = part.strip()
+                if "+" in part:
+                    key, val = part.split("+")
+                    buffs[key.strip()] = int(val.strip())
+                elif "-" in part:
+                    key, val = part.split("-")
+                    buffs[key.strip()] = -int(val.strip())
+        item["buffs"] = buffs
+    elif field == "quantity":
+        if new_value.lower() == "none":
+            item["quantity"] = -1
+        else:
+            try:
+                item["quantity"] = int(new_value)
+            except:
+                await ctx.send("❌ Количество должно быть числом")
+                conn.close()
+                return
+    elif field == "allowed_roles":
+        # Разбор тегов через @
+        item["allowed_roles"] = [role.id for role in ctx.message.role_mentions] if new_value.lower() != "none" else []
+    elif field == "blocked_roles":
+        item["blocked_roles"] = [role.id for role in ctx.message.role_mentions] if new_value.lower() != "none" else []
+    else:
+        await ctx.send("❌ Неверное поле. Доступные: name, price, description, buffs, quantity, allowed_roles, blocked_roles")
+        conn.close()
+        return
+
+    # Обновляем в базе
+    cur.execute("""
+    UPDATE shop
+    SET name=?, price=?, description=?, buffs=?, debuffs=?, allowed_roles=?, blocked_roles=?, quantity=?
+    WHERE LOWER(name)=?
+    """, (
+        item["name"], item["price"], item["description"], str(item["buffs"]), str(item["debuffs"]),
+        str(item["allowed_roles"]), str(item["blocked_roles"]), item["quantity"], name.lower()
+    ))
+    conn.commit()
+    conn.close()
+
+    await ctx.send(f"✅ Предмет **{item['name']}** обновлён. Поле {field} изменено.")
+    
 # ===== Регистрация COG =====
 async def setup(bot):
     await bot.add_cog(Shop(bot))

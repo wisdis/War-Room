@@ -69,6 +69,7 @@ async def load_extensions():
 # ==================== ЗАПУСК ====================
 async def main():
     async with bot:
+        await bot.load_extension("commands.shop")
         await load_extensions()
         await bot.start(TOKEN)
 

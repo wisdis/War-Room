@@ -42,68 +42,81 @@ class Shop(commands.Cog):
         await ctx.send(msg)
 
     # ===== Команда: добавить предмет (пошагово) =====
-    @commands.command()
-    @commands.has_permissions(administrator=True)
-    async def add_item(self, ctx):
-        def check(m):
-            return m.author == ctx.author and m.channel == ctx.channel
+@commands.command()
+@commands.has_permissions(administrator=True)
+async def add_item(self, ctx):
+    def check(m):
+        return m.author == ctx.author and m.channel == ctx.channel
 
-        # 1. Название
-        await ctx.send("Введите название предмета:")
-        msg = await self.bot.wait_for("message", check=check)
-        name = msg.content
+    # 1. Название
+    await ctx.send("Введите название предмета:")
+    msg = await self.bot.wait_for("message", check=check)
+    name = msg.content
 
-        # 2. Цена
-        await ctx.send(f"Введите цену для {name}:")
-        msg = await self.bot.wait_for("message", check=check)
-        try:
-            price = int(msg.content)
-        except:
-            await ctx.send("Неверное число. Отмена.")
-            return
+    # 2. Цена
+    await ctx.send(f"Введите цену для {name}:")
+    msg = await self.bot.wait_for("message", check=check)
+    try:
+        price = int(msg.content)
+    except:
+        await ctx.send("Неверное число. Отмена.")
+        return
 
-        # 3. Описание
-        await ctx.send(f"Введите описание для {name}:")
-        msg = await self.bot.wait_for("message", check=check)
-        description = msg.content
+    # 3. Описание
+    await ctx.send(f"Введите описание для {name}:")
+    msg = await self.bot.wait_for("message", check=check)
+    description = msg.content
 
-        # 4. Баффы
-        await ctx.send("Введите баффы через запятую, например: attack+10, defense-5, income+20, stability+5, population+2\nЕсли нет — напишите none:")
-        msg = await self.bot.wait_for("message", check=check)
-        buffs = {}
-        if msg.content.lower() != "none":
-            for part in msg.content.split(","):
-                part = part.strip()
-                if "+" in part:
-                    key, val = part.split("+")
-                    buffs[key.strip()] = int(val.strip())
-                elif "-" in part:
-                    key, val = part.split("-")
-                    buffs[key.strip()] = -int(val.strip())
+    # 4. Баффы
+    await ctx.send("Введите баффы через запятую, например: attack+10, defense-5, income+20, stability+5, population+2\nЕсли нет — напишите none:")
+    msg = await self.bot.wait_for("message", check=check)
+    buffs = {}
+    if msg.content.lower() != "none":
+        for part in msg.content.split(","):
+            part = part.strip()
+            if "+" in part:
+                key, val = part.split("+")
+                buffs[key.strip()] = int(val.strip())
+            elif "-" in part:
+                key, val = part.split("-")
+                buffs[key.strip()] = -int(val.strip())
 
-        # 5. Количество
-        await ctx.send(f"Введите количество для {name}:")
-        msg = await self.bot.wait_for("message", check=check)
+    # 5. Количество
+    await ctx.send(f"Введите количество для {name} (напишите 'none' для бесконечного запаса):")
+    msg = await self.bot.wait_for("message", check=check)
+    if msg.content.lower() == "none":
+        quantity = -1  # бесконечный запас
+    else:
         try:
             quantity = int(msg.content)
         except:
             quantity = 1
 
-        # Создаём объект предмета
-        item = {
-            "name": name,
-            "price": price,
-            "description": description,
-            "buffs": buffs,
-            "debuffs": {},
-            "allowed_roles": [],
-            "blocked_roles": [],
-            "quantity": quantity
-        }
+    # 6. Разрешённые роли
+    await ctx.send("Введите теги разрешённых ролей через пробел, например: @Государство @everyone\nЕсли нет — напишите none:")
+    msg = await self.bot.wait_for("message", check=check)
+    allowed_roles = [role.id for role in msg.role_mentions] if msg.content.lower() != "none" else []
 
-        # Добавляем в базу через функцию
-        add_shop_item(item)
-        await ctx.send(f"✅ Предмет **{name}** добавлен в магазин!")
+    # 7. Заблокированные роли
+    await ctx.send("Введите теги заблокированных ролей через пробел, например: @Бандиты\nЕсли нет — напишите none:")
+    msg = await self.bot.wait_for("message", check=check)
+    blocked_roles = [role.id for role in msg.role_mentions] if msg.content.lower() != "none" else []
+
+    # Создаём объект предмета
+    item = {
+        "name": name,
+        "price": price,
+        "description": description,
+        "buffs": buffs,
+        "debuffs": {},
+        "allowed_roles": allowed_roles,
+        "blocked_roles": blocked_roles,
+        "quantity": quantity
+    }
+
+    # Добавляем в базу через функцию
+    add_shop_item(item)
+    await ctx.send(f"✅ Предмет **{name}** добавлен в магазин!")
 
     # ===== Команда: удалить предмет =====
     @commands.command()

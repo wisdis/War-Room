@@ -1,7 +1,7 @@
 import sqlite3
 import json
 
-DB_PATH = "data.db"
+DB_PATH = "database.db"
 
 
 def init_db():

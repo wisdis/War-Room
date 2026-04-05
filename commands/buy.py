@@ -1,6 +1,8 @@
 from discord.ext import commands
 from storage import get_shop_item_by_name, get_balance, add_money, apply_item_effects, decrease_shop_quantity
 
+DB_PATH = "database.db"
+
 class Buy(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

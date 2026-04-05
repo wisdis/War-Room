@@ -3,6 +3,8 @@ from discord.ext import commands
 from storage import get_balance, add_money, get_user_items
 from utils import can_buy, apply_item_effects_to_user
 
+DB_PATH = "database.db"
+
 class Economy(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

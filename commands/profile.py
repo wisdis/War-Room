@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from storage import get_balance, get_user_stats, get_user_items
 
+DB_PATH = "database.db"
 
 class Profile(commands.Cog):
     def __init__(self, bot):

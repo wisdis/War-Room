@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from storage import set_role_income, remove_role_income, get_all_role_income
 
+DB_PATH = "database.db"
 
 class Roles(commands.Cog):
     def __init__(self, bot):

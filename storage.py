@@ -56,7 +56,61 @@ def init_db():
     conn.commit()
     conn.close()
 
+def get_shop_item_by_name(name: str):
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
 
+    cur.execute("""
+    SELECT name, description, price, allowed_roles, blocked_roles, buffs, debuffs, quantity
+    FROM shop
+    WHERE LOWER(name)=?
+    """, (name.lower(),))
+
+    row = cur.fetchone()
+    conn.close()
+
+    if not row:
+        return None
+
+    return {
+        "name": row[0],
+        "description": row[1],
+        "price": row[2],
+        "allowed_roles": json.loads(row[3]) if row[3] else [],
+        "blocked_roles": json.loads(row[4]) if row[4] else [],
+        "buffs": json.loads(row[5]) if row[5] else {},
+        "debuffs": json.loads(row[6]) if row[6] else {},
+        "quantity": row[7] if row[7] is not None else 1
+    }
+
+
+def decrease_shop_quantity(name: str):
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    cur.execute("SELECT quantity FROM shop WHERE LOWER(name)=?", (name.lower(),))
+    row = cur.fetchone()
+
+    if not row:
+        conn.close()
+        return False
+
+    quantity = row[0]
+
+    # бесконечный запас
+    if quantity == -1:
+        conn.close()
+        return True
+
+    if quantity <= 0:
+        conn.close()
+        return False
+
+    cur.execute("UPDATE shop SET quantity = quantity - 1 WHERE LOWER(name)=?", (name.lower(),))
+    conn.commit()
+    conn.close()
+    return True
+    
 def get_user(user_id: int):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
